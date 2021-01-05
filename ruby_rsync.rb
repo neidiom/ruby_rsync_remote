@@ -46,6 +46,7 @@ class Sync
 
     cmd = 'rsync --stats -X -A --numeric-ids -aH --delete --no-whole-file --sparse --one-file-system --relative ' \
     + "--bwlimit=#{bwlimit}" \
+    + " " \
     + '-e ' \
     + ssh_string + \
     ' --exclude=".DS_Store" ' \
