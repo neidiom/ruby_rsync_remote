@@ -5,12 +5,13 @@ require 'slack-notifier'
 require 'socket'
 
 class Sync
-  def initialize(source, ssh_port, ssh_username, ssh_host, destination, logfile, slack_webhook)
+  def initialize(source, ssh_port, ssh_username, ssh_host, destination, bwlimit, logfile, slack_webhook)
     @source = source
     @ssh_username = ssh_username
     @ssh_port = ssh_port
     @ssh_host = ssh_host
     @destination = destination
+    @bwlimit = bwlimit
     @logfile = logfile
     @slack_webhook = slack_webhook
   end
@@ -21,6 +22,7 @@ class Sync
     ssh_username = @ssh_username,
     ssh_host = @ssh_host,
     destination = @destination,
+    bwlimit = @bwlimit,
     logfile = @logfile,
     slack_webhook = @slack_webhook
   )
@@ -29,14 +31,22 @@ class Sync
 
    destination_string = "#{ssh_username}" + "@" + "#{ssh_host}" + ":" + "#{destination}"
 
-    if ssh_port
-      ssh_string = "'ssh -p 22'"
-      ssh_string.sub! '22', ssh_port
-    else
-      ssh_string = "'ssh -p 22'"
-    end
+   if bwlimit
+     bwlimit = bwlimit.to_i
+   else
+     bwlimit = 0
+   end
 
-    cmd = 'rsync -avz -e ' \
+   if ssh_port
+     ssh_string = "'ssh -p 22'"
+     ssh_string.sub! '22', ssh_port
+   else
+     ssh_string = "'ssh -p 22'"
+   end
+
+    cmd = 'rsync --stats -X -A --numeric-ids -aH --delete --no-whole-file --sparse --one-file-system --relative ' \
+    + "--bwlimit=#{bwlimit}" \
+    + '-e ' \
     + ssh_string + \
     ' --exclude=".DS_Store" ' \
     + source \
